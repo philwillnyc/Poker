@@ -1,7 +1,9 @@
 """The main computational algorithms for ranking 7 card hands. It take tuples as inputs.
 Perhaps the next step for improving performance would be to make it cython."""
 
-from numpy import array,zeros
+import numpy as np
+from math import comb
+from itertools import combinations
 from collections import defaultdict
 from functools import lru_cache
 from constants import NUMERICAL_DECK
@@ -11,15 +13,10 @@ from constants import NUMERICAL_DECK
 #There are 133,784,560 possible hands. We could reduce this by combining equivalent suit cases.
 #how much memory would it take to save all of this, and how quickly would it load and be accessed?
 def rank(*hand):
-    """Pass seven cards.
+    """Pass seven cards, assumed to be sorted. 
     Returns a tuple based ranking of the best possible hand. 
     Format: (numerical_hand_rank,*comparison_card_values)."""
 
-    hand = list(hand)
-
-    #Sort the hand high to low.
-
-    hand.sort(reverse = True)
 
     #count the number of times each value and each suit occurs. 
 
@@ -164,9 +161,9 @@ def rank(*hand):
 
 @lru_cache(maxsize = None)
 def compare(*hands):
-    """Pass tuple representations of 7 card hands, output will be a numpy array
+    """Pass sorted tuple representations of 7 card hands, output will be a numpy array
     of winning and tying indices (1 for win or tie, 0 for loss; all wins come first then ties)."""
-    ranks = [rank(frozenset(hand)) for hand in hands]
+    ranks = [rank(*hand) for hand in hands]
     max_rank = max(ranks)
     results = []
     tie = False
@@ -182,45 +179,31 @@ def compare(*hands):
             results.append(0)
     
     if tie:
-        return array([0]*len(hands)+results)
+        return np.array([0]*len(hands)+results)
     else:
-        return array(results+[0]*len(hands))
-    
-    #return array([1 if rank == max_rank else 0 for rank in ranks])
+        return np.array(results+[0]*len(hands))
 
-
+@lru_cache(maxsize = None)
 def probabilities(community_cards, *holdem_hands):
-    """Pass a frozenset of known community cards, and a sequence of pairs corresponding
-    to sorted hold-em hands. Outputs a numpy array giving the probability of each of the hands being a winning hand."""
-    #Store the deck minus the community cards and the holdem cards in a nonlocal variable
-    #to avoid creating it repeatedly
+    """Pass a tuple of known community cards, and a sequence of pairs corresponding
+    to hold-em hands. Outputs a numpy array giving the probability of each of the hands being a winning hand."""
+
     holdem_cards = set()
     for hand in holdem_hands:
         for card in hand:
             holdem_cards.add(card)
     remaining_cards = NUMERICAL_DECK-holdem_cards.union(community_cards)
+    num_unknown = 5-len(community_cards)
+    possible_rem_cards = (cards for cards in combinations(remaining_cards,num_unknown))
+    m = comb(len(remaining_cards),num_unknown)
+    #numpy array with a row for each combination
+    output = np.zeros((m,2*len(holdem_hands)))
 
-    @lru_cache(maxsize = None)
-    def helper(community_cards):
-        nonlocal remaining_cards, holdem_hands
-        #if all the cards are there, probabilities correspond to what's given in compare.
-        if len(community_cards) == 5:
-            hands = []
-            for holdem_hand in holdem_hands:
-                hand = holdem_hand + tuple(community_cards)
-                hands.append(tuple(sorted(hand)))
-            return compare(*hands)
-        #otherwise, put one more card in community cards and recurse.
-        else:
-            new_remaining_cards = remaining_cards-community_cards
-            num_remaining = len(new_remaining_cards)
-            output = zeros(2*len(holdem_hands))
-            for card in new_remaining_cards:
-                new_community_cards = community_cards.union({card})
-                output = output + helper(new_community_cards)
-            return output/num_remaining
-
-    return helper(community_cards)
+    for i,cards in enumerate(possible_rem_cards):
+        hands = [tuple(sorted(cards+community_cards+hand)) for hand in holdem_hands]
+        output[i] += compare(*hands)
+    #add all the rows of the numpy array, divided by size of sample space
+    return np.sum(output,axis = 0)/m
 
 test_hands = [((5,1),(6,4)),
             ((14,2),(14,3)),
@@ -228,7 +211,7 @@ test_hands = [((5,1),(6,4)),
 
 #print(compare(((2, 2), (2, 3), (3, 4), (4, 3), (12, 1), (12, 4), (14, 4)),
 #((3, 4), (4, 3), (5, 2), (6, 2), (12, 1), (12, 4), (14, 4))))
-print(probabilities(frozenset(),*test_hands))
+print(probabilities(tuple(),*test_hands))
 
 
 # print(probabilities(frozenset([(14,3),
