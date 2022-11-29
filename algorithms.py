@@ -2,6 +2,7 @@
 Perhaps the next step for improving performance would be to make it cython."""
 
 import numpy as np
+import random
 from math import comb
 from itertools import combinations
 from collections import defaultdict
@@ -196,6 +197,7 @@ def probabilities(community_cards, *holdem_hands):
     num_unknown = 5-len(community_cards)
     possible_rem_cards = (cards for cards in combinations(remaining_cards,num_unknown))
     m = comb(len(remaining_cards),num_unknown)
+   
     #numpy array with a row for each combination
     output = np.zeros((m,2*len(holdem_hands)))
 
