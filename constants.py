@@ -1,12 +1,12 @@
-SUITS = ['Hearts',
-'Diamonds',
-'Spades',
-'Clubs']
+SUITS = ['h',
+'d',
+'s',
+'c']
 NUMERICAL_SUITS = [1,2,3,4]
 SUIT_RANKING_PAIRS = list(zip(NUMERICAL_SUITS,SUITS))
 SUIT_RANKING_DICT = dict(zip(SUITS,NUMERICAL_SUITS))
 
-CARD_VALUES = [str(i) for i in range(2,11)]+['Jack','Queen','King','Ace']
+CARD_VALUES = [str(i) for i in range(2,11)]+['J','Q','K','A']
 NUMERICAL_VALUES = [i for i in range(2,15)]
 CARD_RANKING_PAIRS = list(zip(NUMERICAL_VALUES,CARD_VALUES))
 CARD_RANKING_DICT = dict(zip(CARD_VALUES,NUMERICAL_VALUES))

@@ -1,5 +1,5 @@
-"""The main computational algorithms for ranking 7 card hands. It take tuples as inputs.
-Perhaps the next step for improving performance would be to make it cython."""
+"""Python based computational algorithms for ranking 7 card hands and computing
+Hold-em probabilities. Very slow compared to the Cython based algorithms."""
 
 import numpy as np
 import random
