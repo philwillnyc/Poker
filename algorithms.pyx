@@ -1,11 +1,219 @@
-"""Cython algorithms for ranking seven-card hands and computing hold-em probabilities."""
+"""Cython based algorithms for ranking seven-card hands and computing hold-em probabilities."""
 
 from constants import LIST_NUMERICAL_DECK
 from math import comb
 
+def get_rank(*hand):
+    
+    """Pass a list corresponding to a seven card hand, return numerical ranking data. 
+    Smaller numbers are better."""
+
+    #Re-index.
+
+    reindex = lambda pair: [12-(pair[0]-2), pair[1]-1]
+    hand = list(map(reindex,hand))
+    
+    cdef short[13][4] hand_matrix
+    cdef short[6] results = [0]*6
+    cdef short[7][2] cards = hand
+
+    hand_to_matrix(cards,hand_matrix)
+    rank(hand_matrix, results)
+    return results
+
+def probabilities(community_cards, *holdem_hands):
+
+    """Pass a list of known community cards, and a sequence of pairs corresponding
+    to hold-em hands. Outputs an array giving the probability of each of
+    the hands being a winning hand or tying hand."""
+    
+    #Validate the input:
+    
+    if len(community_cards) not in {0,3,4,5}:
+        raise Exception('Not a flop, river, or turn situation.')
+    if len(holdem_hands)>10 or len(holdem_hands)<2:
+        raise Exception('Algorithm only supports between 2 and 10 cards.')
+
+    #Modify the indexing:
+
+    reindex = lambda pair: [12-(pair[0]-2), pair[1]-1]
+    community_cards = list(map(reindex, community_cards))
+    holdem_hands = [list(map(reindex, hand)) for hand in holdem_hands]
+    REINDEXED_NUMERICAL_DECK = list(map(reindex, LIST_NUMERICAL_DECK))
+
+    #Build the deck of remaining cards.
+
+    used_cards = set([tuple(card) for card in community_cards]) 
+    holdem_cards = set()
+    for hand in holdem_hands:
+        for card in hand:
+            holdem_cards.add(tuple(card))
+    used_cards = used_cards.union(holdem_cards)
+    remaining_cards = []
+    for card in REINDEXED_NUMERICAL_DECK:
+        if tuple(card) not in used_cards:
+            remaining_cards.append(card)
+
+    #Initialize all the variables that will go into the cython function to count outcomes.
+    
+    cdef short num_hands = len(holdem_hands)
+    cdef short n = len(community_cards)
+    cdef short ds = 52 - n - 2*num_hands
+    cdef int num_comb = comb(ds,5-n)
+    cdef short[48][2] rd
+    for i in range(len(remaining_cards)):
+        rd[i] = remaining_cards[i]
+    cdef short[5][2] cc
+    for i in range(len(community_cards)):
+        cc[i] = community_cards[i]
+    cdef short[10][2][2] hh
+    for i in range(len(holdem_hands)):
+        hh[i] = holdem_hands[i]
+
+    #Empty arrays to process and store data. 
+
+    cdef short[10][7][2] fh = [[[0,0]]*7]*10
+    cdef short[10][13][4] fhm = [[[0,0,0,0]]*13]*10
+    cdef short[10][6] ranks = [[0]*6]*10
+    cdef short[6] results = [0]*6
+    cdef long[10] wins = [0]*10
+    cdef long[10] ties = [0]*10
+
+    #Process.
+
+    count_outcomes(num_hands,n,ds,num_comb,rd,cc,hh,fh,fhm,ranks,results,wins,ties)
+
+    #Remove extra space, divide, and return the final output. 
+
+    w = [x for x in wins[:len(holdem_hands)]]
+    t = [x for x in ties[:len(holdem_hands)]]
+    output = [x/num_comb for x in w+t]
+    return output
+
+
+cdef short count_outcomes(short num_hands, #how many hands are being considered (max set to ten)
+                    short n, #number of already determined community cards
+                    short ds, #remaining deck size
+                    int num_comb, #number of combinations of community cards
+                    short[48][2] rd, #remaining deck
+                    short[5][2] cc, #already determined community cards
+                    short[10][2][2] hh, #holdem hands
+                    short[10][7][2] fh, #store the full hand after adding a community card combination
+                    short[10][13][4] fhm, #stores hands in matrix form
+                    short[10][6] ranks, #stores ranks
+                    short[6] results, #results from ranking
+                    long[10] wins, #stores number of wins for each player
+                    long[10] ties): #stores ties stores number of ties
+
+    """Creates all possible hands using the remaining cards 
+    with the given community cards for each holdem hand. 
+    Ranks the results and based on these ranks assigns win or tie."""
+
+    #Iterate over all the combinations cards that use the remaining cards and community cards, and apply
+    #the update_counts fuction. We divide into cases: 0, 3, 4, and 5 community cards available and use simple loops. 
+    #There is likely a more natural way to iterate this, which would generalize better, but this gets the job
+    #done and avoids having to use itertools.combinations, a key bottleneck. An alternative is to try a numpy array. 
+
+    cdef short i0,i1,i2,i3,i4
+    cdef short[5][2] com_card_comb
+    cdef short r = 5-n
+    cdef long i = 0
+
+    #Case of no community cards.
+
+    if n == 0:
+        for i0 in range(ds-4):
+            for i1 in range(i0+1,ds-3):
+                for i2 in range(i1+1,ds-2):
+                    for i3 in range(i2+1,ds-1):
+                        for i4 in range(i3+1,ds):
+                            com_card_comb = rd[i0],rd[i1],rd[i2],rd[i3],rd[i4]
+                            update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
+
+
+     #Case of 3 community cards.
+
+    elif n == 3:
+        for i0 in range(ds-1):
+            for i1 in range(i0+1,ds):
+                com_card_comb = cc[0],cc[1],cc[2],rd[i0],rd[i1]
+                update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
+
+    #Case of 4 community cards.
+
+    elif n == 4:
+        for i0 in range(ds):
+            com_card_comb = cc[0],cc[1],cc[2],cc[3],rd[i0]
+            update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
+
+    #Case of 5 community cards.
+    
+    elif n == 5:
+        i = 0
+        com_card_comb = cc[0],cc[1],cc[2],cc[3],cc[4]
+        update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
+
+    return 0
+
+
+cdef short update_counts(short num_hands, #How many hands are being considered (max set to ten)
+                    short[5][2] com_card_comb, #the combination being used
+                    short[10][2][2] hh, #holdem hands
+                    short[10][7][2] fh, #store the full hand after adding a community card combination
+                    short[10][13][4] fhm, #stores hands in matrix form
+                    short[10][6] ranks, #stores ranks
+                    short[6] results, #results from ranking
+                    long[10] wins, #stores number of wins for each player
+                    long[10] ties): #stores ties stores number of ties
+
+    """For a given combination of five cards a collection of holdem hands,
+    update the wins/ties record based on the rankings of the resulting hands."""
+
+    cdef short j = 0
+    for j in range(num_hands):
+        fh[j][:2] = hh[j]
+
+    #Form seven-card hands using each hold-em pair. 
+    #Transform each to a matrix and pass to the rank function.
+
+    cdef short[10] win_or_tie
+    cdef short min_count 
+    cdef short[6] min_rank = [9,0,0,0,0,0]  #bigger than any hand rank
+
+    for j in range(num_hands):
+        fh[j][2:] = com_card_comb
+        hand_to_matrix(fh[j],fhm[j])
+        rank(fhm[j],results)
+        ranks[j] = results
+
+    #Now ranks contains rankings of each hand, so we can use this data 
+    #to update wins or ties.
+
+    min_count = 0
+    win_or_tie = [0]*10
+
+    for j in range(num_hands):
+        if compare_array(ranks[j],min_rank) == -1:
+            min_rank = ranks[j]
+    
+    for j in range(num_hands):
+        if compare_array(ranks[j],min_rank) == 0:
+            min_count+=1
+            win_or_tie[j] = 1
+
+    #If there are multiple min ranks, update ties. Otherwise, update wins.
+
+    if min_count > 1:
+        for j in range(num_hands):
+            ties[j]+=win_or_tie[j]
+    else:
+        for j in range(num_hands):
+            wins[j]+=win_or_tie[j]
+
 cdef short hand_to_matrix(short[7][2] cards, short[13][4] hand_matrix):
     """Transform an array representation of a hand into a matrix representation.
     Rows are values, columns are suits."""
+
     cdef short i,j
 
     #Clear the matrix.
@@ -289,210 +497,3 @@ cdef short compare_array(short arr1[6], short arr2[6]):
         if arr1[i]>arr2[i]:
             return 1
     return 0
-
- #Initialize the seven card hands with the holdem cards. 
-
-cdef short update_counts(short num_hands, #How many hands are being considered (max set to ten)
-                    short[5][2] com_card_comb, #the combination being used
-                    short[10][2][2] hh, #holdem hands
-                    short[10][7][2] fh, #store the full hand after adding a community card combination
-                    short[10][13][4] fhm, #stores hands in matrix form
-                    short[10][6] ranks, #stores ranks
-                    short[6] results, #results from ranking
-                    long[10] wins, #stores number of wins for each player
-                    long[10] ties): #stores ties stores number of ties
-
-    """For a given combination of five cards a collection of holdem hands,
-    update the wins/ties record based on the rankings of the resulting hands."""
-
-    cdef short j = 0
-    for j in range(num_hands):
-        fh[j][:2] = hh[j]
-
-    #Form seven-card hands using each hold-em pair. 
-    #Transform each to a matrix and pass to the rank function.
-
-    cdef short[10] win_or_tie
-    cdef short min_count 
-    cdef short[6] min_rank = [9,0,0,0,0,0]  #bigger than any hand rank
-
-    for j in range(num_hands):
-        fh[j][2:] = com_card_comb
-        hand_to_matrix(fh[j],fhm[j])
-        rank(fhm[j],results)
-        ranks[j] = results
-
-    #Now ranks contains rankings of each hand, so we can use this data 
-    #to update wins or ties.
-
-    min_count = 0
-    win_or_tie = [0]*10
-
-    for j in range(num_hands):
-        if compare_array(ranks[j],min_rank) == -1:
-            min_rank = ranks[j]
-    
-    for j in range(num_hands):
-        if compare_array(ranks[j],min_rank) == 0:
-            min_count+=1
-            win_or_tie[j] = 1
-
-    #If there are multiple min ranks, update ties. Otherwise, update wins.
-
-    if min_count > 1:
-        for j in range(num_hands):
-            ties[j]+=win_or_tie[j]
-    else:
-        for j in range(num_hands):
-            wins[j]+=win_or_tie[j]
-
-cdef short count_outcomes(short num_hands, #how many hands are being considered (max set to ten)
-                    short n, #number of already determined community cards
-                    short ds, #remaining deck size
-                    int num_comb, #number of combinations of community cards
-                    short[48][2] rd, #remaining deck
-                    short[5][2] cc, #already determined community cards
-                    short[10][2][2] hh, #holdem hands
-                    short[10][7][2] fh, #store the full hand after adding a community card combination
-                    short[10][13][4] fhm, #stores hands in matrix form
-                    short[10][6] ranks, #stores ranks
-                    short[6] results, #results from ranking
-                    long[10] wins, #stores number of wins for each player
-                    long[10] ties): #stores ties stores number of ties
-
-    """Creates all possible hands using the remaining cards 
-    with the given community cards for each holdem hand. 
-    Ranks the results and based on these ranks assigns win or tie."""
-
-    #Iterate over all the combinations cards that use the remaining cards and community cards, and apply
-    #the update_counts fuction. We divide into cases: 0, 3, 4, and 5 community cards available and use simple loops. 
-    #There is likely a more natural way to iterate this, which would generalize better, but this gets the job
-    #done and avoids having to use itertools.combinations, a key bottleneck. An alternative is to try a numpy array. 
-
-    cdef short i0,i1,i2,i3,i4
-    cdef short[5][2] com_card_comb
-    cdef short r = 5-n
-    cdef long i = 0
-
-    #Case of no community cards.
-
-    if n == 0:
-        for i0 in range(ds-4):
-            for i1 in range(i0+1,ds-3):
-                for i2 in range(i1+1,ds-2):
-                    for i3 in range(i2+1,ds-1):
-                        for i4 in range(i3+1,ds):
-                            com_card_comb = rd[i0],rd[i1],rd[i2],rd[i3],rd[i4]
-                            update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
-
-
-     #Case of 3 community cards.
-
-    elif n == 3:
-        for i0 in range(ds-1):
-            for i1 in range(i0+1,ds):
-                com_card_comb = cc[0],cc[1],cc[2],rd[i0],rd[i1]
-                update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
-
-    #Case of 4 community cards.
-
-    elif n == 4:
-        for i0 in range(ds):
-            com_card_comb = cc[0],cc[1],cc[2],cc[3],rd[i0]
-            update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
-
-    #Case of 5 community cards.
-    
-    elif n == 5:
-        i = 0
-        com_card_comb = cc[0],cc[1],cc[2],cc[3],cc[4]
-        update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
-
-    return 0
-
-def get_rank(*hand):
-    
-    """Pass a list corresponding to a seven card hand, return numerical ranking data. 
-    Smaller numbers are better."""
-
-    #Re-index.
-
-    reindex = lambda pair: [12-(pair[0]-2), pair[1]-1]
-    hand = list(map(reindex,hand))
-    
-    cdef short[13][4] hand_matrix
-    cdef short[6] results = [0]*6
-    cdef short[7][2] cards = hand
-
-    hand_to_matrix(cards,hand_matrix)
-    rank(hand_matrix, results)
-    return results
-
-def probabilities(community_cards, *holdem_hands):
-    """Pass a list of known community cards, and a sequence of pairs corresponding
-    to hold-em hands. Outputs an array giving the probability of each of
-    the hands being a winning hand or tying hand."""
-    
-    #Validate the input:
-    
-    if len(community_cards) not in {0,3,4,5}:
-        raise Exception('Not a flop, river, or turn situation.')
-    if len(holdem_hands)>10 or len(holdem_hands)<2:
-        raise Exception('Algorithm only supports between 2 and 10 cards.')
-
-    #Modify the indexing:
-
-    reindex = lambda pair: [12-(pair[0]-2), pair[1]-1]
-    community_cards = list(map(reindex, community_cards))
-    holdem_hands = [list(map(reindex, hand)) for hand in holdem_hands]
-    REINDEXED_NUMERICAL_DECK = list(map(reindex, LIST_NUMERICAL_DECK))
-
-    #Build the deck of remaining cards.
-
-    used_cards = set([tuple(card) for card in community_cards]) 
-    holdem_cards = set()
-    for hand in holdem_hands:
-        for card in hand:
-            holdem_cards.add(tuple(card))
-    used_cards = used_cards.union(holdem_cards)
-    remaining_cards = []
-    for card in REINDEXED_NUMERICAL_DECK:
-        if tuple(card) not in used_cards:
-            remaining_cards.append(card)
-
-    #Initialize all the variables that will go into the cython function to count outcomes.
-    
-    cdef short num_hands = len(holdem_hands)
-    cdef short n = len(community_cards)
-    cdef short ds = 52 - n - 2*num_hands
-    cdef int num_comb = comb(ds,5-n)
-    cdef short[48][2] rd
-    for i in range(len(remaining_cards)):
-        rd[i] = remaining_cards[i]
-    cdef short[5][2] cc
-    for i in range(len(community_cards)):
-        cc[i] = community_cards[i]
-    cdef short[10][2][2] hh
-    for i in range(len(holdem_hands)):
-        hh[i] = holdem_hands[i]
-
-    #Empty arrays to process and store data. 
-
-    cdef short[10][7][2] fh = [[[0,0]]*7]*10
-    cdef short[10][13][4] fhm = [[[0,0,0,0]]*13]*10
-    cdef short[10][6] ranks = [[0]*6]*10
-    cdef short[6] results = [0]*6
-    cdef long[10] wins = [0]*10
-    cdef long[10] ties = [0]*10
-
-    #Process.
-
-    count_outcomes(num_hands,n,ds,num_comb,rd,cc,hh,fh,fhm,ranks,results,wins,ties)
-
-    #Remove extra space, divide, and return the final output. 
-
-    w = [x for x in wins[:len(holdem_hands)]]
-    t = [x for x in ties[:len(holdem_hands)]]
-    output = [x/num_comb for x in w+t]
-    return output
-
