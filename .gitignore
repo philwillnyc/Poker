@@ -1,0 +1,8 @@
+.ipynb_checkpoints
+.conda
+.vscode
+__pycache__
+build
+cython_debug.ipynb
+algorithms.c
+algorithms.pyx

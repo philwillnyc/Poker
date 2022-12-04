@@ -20,8 +20,7 @@ class Card:
 
     @classmethod()
     def make(cls,value: str, suit: str):
-        
-
+        pass
 
 class Hand:
     """A hand is made up of Cards."""

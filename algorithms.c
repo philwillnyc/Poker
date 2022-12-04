@@ -3359,7 +3359,7 @@ static short __pyx_f_10algorithms_rank(short (*__pyx_v_hand_matrix)[4], short *_
  *                 j+=1
  *         c1,c2,_,_,_ = top_values             # <<<<<<<<<<<<<<
  * 
- *         #Find the best single. ##FIX
+ *         #Find the best single (which might be part of a different pair.)
  */
     __pyx_t_8 = __pyx_v_top_values;
     __pyx_t_9 = (__pyx_t_8[0]);
@@ -3374,7 +3374,7 @@ static short __pyx_f_10algorithms_rank(short (*__pyx_v_hand_matrix)[4], short *_
     __pyx_v__ = __pyx_t_13;
 
     /* "algorithms.pyx":234
- *         #Find the best single. ##FIX
+ *         #Find the best single (which might be part of a different pair.)
  * 
  *         for i in range(13):             # <<<<<<<<<<<<<<
  *             if value_counts[i] >= 1 and i!= c1 and i!=c2:
