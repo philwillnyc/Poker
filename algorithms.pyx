@@ -229,7 +229,7 @@ cdef short rank(short[13][4] hand_matrix, short[6] results):
                 j+=1
         c1,c2,_,_,_ = top_values
 
-        #Find the best single.
+        #Find the best single (which might be part of a different pair.)
         
         for i in range(13):
             if value_counts[i] >= 1 and i!= c1 and i!=c2:
