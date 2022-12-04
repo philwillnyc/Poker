@@ -15,9 +15,8 @@ cdef short hand_to_matrix(short[7][2] cards, short[13][4] hand_matrix):
             hand_matrix[i][j] = 0
 
     for i in range(7):
-        #Adjustments need to be made to the indices.
-        #We start indexing at 0 and reverse highest to lowest for values.
-        hand_matrix[cards[i]][cards[i][1]] = 1
+        hand_matrix[cards[i][0]][cards[i][1]] = 1
+
     return 0
 
 cdef short rank(short[13][4] hand_matrix, short[6] results):
@@ -408,8 +407,6 @@ cdef short count_outcomes(short num_hands, #how many hands are being considered 
         i = 0
         com_card_comb = cc[0],cc[1],cc[2],cc[3],cc[4]
         update_counts(num_hands,com_card_comb,hh,fh,fhm,ranks,results,wins,ties)
-    
-   
 
     return 0
 
@@ -417,14 +414,19 @@ def get_rank(*hand):
     
     """Pass a list corresponding to a seven card hand, return numerical ranking data. 
     Smaller numbers are better."""
+
+    #Re-index.
+
+    reindex = lambda pair: [12-(pair[0]-2), pair[1]-1]
+    hand = list(map(reindex,hand))
     
     cdef short[13][4] hand_matrix
     cdef short[6] results = [0]*6
     cdef short[7][2] cards = hand
+
     hand_to_matrix(cards,hand_matrix)
     rank(hand_matrix, results)
     return results
-    
 
 def probabilities(community_cards, *holdem_hands):
     """Pass a list of known community cards, and a sequence of pairs corresponding
@@ -438,6 +440,13 @@ def probabilities(community_cards, *holdem_hands):
     if len(holdem_hands)>10 or len(holdem_hands)<2:
         raise Exception('Algorithm only supports between 2 and 10 cards.')
 
+    #Modify the indexing:
+
+    reindex = lambda pair: [12-(pair[0]-2), pair[1]-1]
+    community_cards = list(map(reindex, community_cards))
+    holdem_hands = [list(map(reindex, hand)) for hand in holdem_hands]
+    REINDEXED_NUMERICAL_DECK = list(map(reindex, LIST_NUMERICAL_DECK))
+
     #Build the deck of remaining cards.
 
     used_cards = set([tuple(card) for card in community_cards]) 
@@ -447,7 +456,7 @@ def probabilities(community_cards, *holdem_hands):
             holdem_cards.add(tuple(card))
     used_cards = used_cards.union(holdem_cards)
     remaining_cards = []
-    for card in LIST_NUMERICAL_DECK:
+    for card in REINDEXED_NUMERICAL_DECK:
         if tuple(card) not in used_cards:
             remaining_cards.append(card)
 
