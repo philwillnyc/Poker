@@ -5,5 +5,4 @@ __pycache__
 build
 cython_debug.ipynb
 algorithms.c
-algorithms.pyx
 *.pyd
