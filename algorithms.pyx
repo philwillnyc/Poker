@@ -402,7 +402,6 @@ cdef short rank(short[13][4] hand_matrix, short[6] results):
         results[:2] = hand_rank,c1
         return 0
     
-
     #Case of a three of a kind.
 
     if max_repeats == 3:

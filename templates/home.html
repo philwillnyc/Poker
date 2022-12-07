@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Texas Hold-em Probability Calculator</h1>
+
+<form action = "/" method = post>
+
+    <label for="num_hands">Number of Hands (2 to 10)</label><br><br>
+    <input type="text" id="num_hands" name="num_hands"><br><br>
+    <input type="submit" value = "Submit"</input>
+
+</form>
+
+{% if num_hands > 0%}
+
+    <form action = "/hands" method = post>
+
+    {% for num in hand_numbers %}
+
+        <h3>Hand {{num}}</h3>
+
+        <div>
+            First Card <br>
+
+            {% for val in CARD_VALUES %}
+            <input type="radio" id="hand{{ num }}first_val{{ val }}" name="first_value{{ num }}">
+            <label for="hand{{ num }}first_val{{ val }}">{{ val }}<label>
+            {% endfor %}
+
+            <br>OF: 
+
+            {% for suit in SUITS %}
+            <input type="radio" id="hand{{ num }}first_suit{{ suit }}>" name="first_suit{{ num }}">
+            <label for="hand{{ num }}first_suit{{ suit }}">{{ suit }} <label>
+            {% endfor %}
+
+            <br><br>
+
+            Second Card <br>
+
+            {% for val in CARD_VALUES %}
+            <input type="radio" id="hand{{ num }}first_val{{ val }}" name="second_value{{ num }}">
+            <label for="hand{{ num }}first_val{{ val }}">{{ val }}<label>
+            {% endfor %}
+
+            <br>
+            
+            OF:
+
+            {% for suit in SUITS %}
+            <input type="radio" id="hand{{ num }}second_suit{{ suit }}>" name="second_suit{{ num }}">
+            <label for="hand{{ num }}second_suit{{ suit }}">{{ suit }} <label>
+            {% endfor %}
+
+        </div>
+
+        
+    {% endfor %}
+
+    <br>
+
+    <input type="submit" value = "Submit"</input><br><br>
+
+    </form>
+
+{% endif %}
+
+<form action = "/community" method = post>
+
+    <h3>Flop</h3>
+
+<input type="submit" value = "Submit"</input>
+</form>
+
+<form action = "/community" method = post>
+
+    <h3>Turn</h3>
+
+    <input type="submit" value = "Submit"</input>
+</form>
+
+<form action = "/community" method = post>
+
+    <h3>River</h3>
+
+    <input type="submit" value = "Submit"</input>
+</form>
+
+
+
+</body>
+</html>
