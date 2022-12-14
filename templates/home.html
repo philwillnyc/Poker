@@ -12,33 +12,33 @@
 
 </form>
 
-{% if 10>= num_hands > 1 %}
+{% if view.show_hands_form %}
 
     <form action = "/hands" method = post>
 
-    {% for num in hand_numbers %}
+    {% for num in view.hand_numbers %}
 
-        <h3>Hand {{num}}</h3>
+        <h3>Hand {{ num }}</h3>
 
         <div>
             <h5>First Card</h5>
 
             {% for val in CARD_VALUES %}
-                <input type="radio" id="hand{{ num }}first_val{{ val }}" name="first_value{{ num }}" value = "{{ val }}">
-                <label for="hand{{ num }}first_val{{ val }}">{{ val }}<label>
+                <input type="radio" id="first_val{{ val }}" name="first_value{{ num }}" value = "{{ val }}">
+                <label for="first_val{{ val }}">{{ val }}<label>
             {% endfor %}
 
             <br>OF: 
 
             {% for suit in SUITS %}
-                <input type="radio" id="hand{{ num }}first_suit{{ suit }}>" name="first_suit{{ num }}" value = "{{ suit }}">
+                <input type="radio" id="first_suit{{ suit }}>" name="first_suit{{ num }}" value = "{{ suit }}">
                 <label for="hand{{ num }}first_suit{{ suit }}">{{ suit }} <label>
             {% endfor %}
 
             <h5>Second Card</h5>
             {% for val in CARD_VALUES %}
-                <input type="radio" id="hand{{ num }}second_val{{ val }}" name="second_value{{ num }}"value = "{{ val }}">
-                <label for="hand{{ num }}first_val{{ val }}">{{ val }}<label>
+                <input type="radio" id="second_val{{ val }}" name="second_value{{ num }}" value = "{{ val }}">
+                <label for="first_val{{ val }}">{{ val }}<label>
             {% endfor %}
 
             <br>
@@ -46,8 +46,8 @@
             OF:
 
             {% for suit in SUITS %}
-                <input type="radio" id="hand{{ num }}second_suit{{ suit }}>" name="second_suit{{ num }}" value = "{{ suit }}">
-                <label for="hand{{ num }}second_suit{{ suit }}">{{ suit }} <label>
+                <input type="radio" id="second_suit{{ suit }}>" name="second_suit{{ num }}" value = "{{ suit }}">
+                <label for="second_suit{{ suit }}">{{ suit }} <label>
             {% endfor %}
 
         </div>
@@ -63,68 +63,91 @@
 
 {% endif %}
 
-<form action = "/community" method = post>
+{% if view.show_community_form %}
 
-    <h3>Flop</h3>
+    <form action = "/community" method = post>
 
-        <h5>First Card</h5>
+        <h3>Flop</h3>
+
+            <h5>First Card</h5>
+
+            {% for val in CARD_VALUES %}
+                <input type="radio" id="first_val{{ val }}" name="first_value" value = "{{ val }}">
+                <label for="first_val{{ val }}">{{ val }}<label>
+            {% endfor %}
+
+            <br>OF: 
+
+            {% for suit in SUITS %}
+                <input type="radio" id="first_suit{{ suit }}>" name="first_suit" value = "{{ suit }}">
+                <label for="first_suit{{ suit }}">{{ suit }} <label>
+            {% endfor %}
+
+            <h5>Second Card</h5>
+
+            {% for val in CARD_VALUES %}
+                <input type="radio" id="second_val{{ val }}" name="second_value" value = "{{ val }}">
+                <label for="second_val{{ val }}">{{ val }}<label>
+            {% endfor %}
+
+            <br>
+            
+            OF:
+
+            {% for suit in SUITS %}
+                <input type="radio" id="second_suit{{ suit }}>" name="second_suit" value = "{{ suit }}">
+                <label for="second_suit{{ suit }}">{{ suit }} <label>
+            {% endfor %}
+
+            <br>
+
+            <h5>Third Card</h5>
+
+            {% for val in CARD_VALUES %}
+                <input type="radio" id="first_val{{ val }}" name="second_value" value = "{{ val }}">
+                <label for="first_val{{ val }}">{{ val }}<label>
+            {% endfor %}
+
+            <br>
+            
+            OF:
+
+            {% for suit in SUITS %}
+                <input type="radio" id="third_suit{{ suit }}>" name="third_suit" value = "{{ suit }}">
+                <label for="third_suit{{ suit }}">{{ suit }} <label>
+            {% endfor %}
+
+    <br><br>
+
+    <input type="submit" value = "Submit"</input>
+    </form>
+
+    <form action = "/community" method = post>
+
+        <h3>Turn</h3>
 
         {% for val in CARD_VALUES %}
-            <input type="radio" id="first_val{{ val }}" name="first_value" value = "{{ val }}">
-            <label for="first_val{{ val }}">{{ val }}<label>
-        {% endfor %}
+                <input type="radio" id="first_val{{ val }}" name="first_value">
+                <label for="first_val{{ val }}">{{ val }}<label>
+            {% endfor %}
 
-        <br>OF: 
+            <br>OF: 
 
-        {% for suit in SUITS %}
-            <input type="radio" id="first_suit{{ suit }}>" name="first_suit" value = "{{ suit }}">
-            <label for="first_suit{{ suit }}">{{ suit }} <label>
-        {% endfor %}
-
-        <h5>Second Card</h5>
-
-        {% for val in CARD_VALUES %}
-            <input type="radio" id="second_val{{ val }}" name="second_value" value = "{{ val }}">
-            <label for="second_val{{ val }}">{{ val }}<label>
-        {% endfor %}
-
-        <br>
+            {% for suit in SUITS %}
+                <input type="radio" id="first_suit{{ suit }}>" name="first_suit">
+                <label for="first_suit{{ suit }}">{{ suit }} <label>
+            {% endfor %}
         
-        OF:
+        <br><br>
 
-        {% for suit in SUITS %}
-            <input type="radio" id="second_suit{{ suit }}>" name="second_suit" value = "{{ suit }}">
-            <label for="second_suit{{ suit }}">{{ suit }} <label>
-        {% endfor %}
+        <input type="submit" value = "Submit"</input>
+    </form>
 
-        <br>
+    <form action = "/community" method = post>
 
-        <h5>Third Card</h5>
+        <h3>River</h3>
 
         {% for val in CARD_VALUES %}
-            <input type="radio" id="first_val{{ val }}" name="second_value" value = "{{ val }}">
-            <label for="first_val{{ val }}">{{ val }}<label>
-        {% endfor %}
-
-        <br>
-        
-        OF:
-
-        {% for suit in SUITS %}
-            <input type="radio" id="third_suit{{ suit }}>" name="third_suit" value = "{{ suit }}">
-            <label for="third_suit{{ suit }}">{{ suit }} <label>
-        {% endfor %}
-
-<br><br>
-
-<input type="submit" value = "Submit"</input>
-</form>
-
-<form action = "/community" method = post>
-
-    <h3>Turn</h3>
-
-    {% for val in CARD_VALUES %}
             <input type="radio" id="first_val{{ val }}" name="first_value">
             <label for="first_val{{ val }}">{{ val }}<label>
         {% endfor %}
@@ -135,36 +158,25 @@
             <input type="radio" id="first_suit{{ suit }}>" name="first_suit">
             <label for="first_suit{{ suit }}">{{ suit }} <label>
         {% endfor %}
-    
-    <br><br>
 
-    <input type="submit" value = "Submit"</input>
-</form>
+        <br><br>
 
-<form action = "/community" method = post>
+        <input type="submit" value = "Submit"</input>
+    </form>
 
-    <h3>River</h3>
+{% endif %}
 
-    {% for val in CARD_VALUES %}
-        <input type="radio" id="first_val{{ val }}" name="first_value">
-        <label for="first_val{{ val }}">{{ val }}<label>
+{% if view.show_probabilities %}
+
+    <h1>Probabilities</h1>
+
+    {% for (i, si) in view.hand_numbers_pairs %}
+
+    Hand {{ si }}: Win {{holdem_data.percentages()[0][i]}}%, Tie {{holdem_data.percentages()[1][i]}}% <br>
+
     {% endfor %}
 
-    <br>OF: 
-
-    {% for suit in SUITS %}
-        <input type="radio" id="first_suit{{ suit }}>" name="first_suit">
-        <label for="first_suit{{ suit }}">{{ suit }} <label>
-    {% endfor %}
-
-    <br><br>
-
-    <input type="submit" value = "Submit"</input>
-</form>
-
-<h1>Probabilities</h1>
-
-
+{% endif %}
 
 </body>
 </html>
