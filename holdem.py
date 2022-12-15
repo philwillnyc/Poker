@@ -76,10 +76,10 @@ class Holdem:
             mult = 1
 
         output = list(map(lambda x: round(mult*x,rounding),self.probabilities))
-        return output[:len(self.hands)//2+1], output[len(self.hands)//2+1:]
+        return output[:len(self.hands)], output[len(self.hands):]
         
-h = Holdem([Card('Nine','Hearts'),Card('Nine','Diamonds')],
-        [Card('Two','Hearts'),Card('Three','Spades')])
+#h = Holdem([Card('Nine','Hearts'),Card('Nine','Diamonds')],
+ #       [Card('Two','Hearts'),Card('Three','Spades')])
 
 
-print(h.percentages())
+#print(h.percentages())
