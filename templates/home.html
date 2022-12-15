@@ -46,9 +46,11 @@
 
 <!--Display of community card info-->
 
-<h2>Community Cards</h2>
+
 
 {% if view.show_community_info %}
+
+<h2>Community Cards</h2>
 
     {% for card in holdem_data.flop %}
         {{ card.value }} of {{ card.suit }} <br>
