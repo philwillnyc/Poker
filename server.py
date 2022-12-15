@@ -51,7 +51,7 @@ def main():
 
         #clear data
         holdem_data.hands.clear()
-        holdem_data.flop.clear
+        holdem_data.flop.clear()
         holdem_data.turn = None
         holdem_data.river = None
 
