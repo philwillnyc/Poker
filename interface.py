@@ -227,7 +227,7 @@ def main():
                         SUITS = SUITS,
                         CARD_VALUES = CARD_VALUES,
                             )
-    app.run(debug = True)
+    app.run()
 
 if __name__ == '__main__':
     main()

@@ -2,7 +2,6 @@
 Hold-em probabilities. Very slow compared to the Cython based algorithms."""
 
 import numpy as np
-import random
 from math import comb
 from itertools import combinations
 from collections import defaultdict
