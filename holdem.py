@@ -12,6 +12,12 @@ class Card:
         """returns a numerical array based on the card."""
         return [CR[self.value],SR[self.suit]]
 
+    def __eq__(self,other):
+        return self.value == other.value and self.suit == other.suit
+
+    def __hash__(self):
+        return hash((self.value,self.suit))
+
 class Holdem:
     """Class for data on a hold-em game."""
     def __init__(self, *hands, flop = [], turn = None, river = None):
@@ -27,6 +33,14 @@ class Holdem:
         
         if len(self.hands)>1:
             self.update_probabilities()
+    
+    def clear(self):
+        """Resets the data."""
+        self.flop.clear()
+        self.turn = None
+        self.river = None
+        self.hands.clear()
+        self.probabilities.clear()
         
     def add_hand(self,card1, card2):
         """Adds a hand and updates the probabilities."""

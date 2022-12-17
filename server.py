@@ -17,11 +17,28 @@ class View():
         self.show_river_form = False
         self.show_probabilities = False
         self.show_community_info = False
+        #keep track of which cards are in play to avoid duplicates
+
+        self.cards = set()
     
     def update_hand_numbers(self):
+        """Generates hand number data to use in display."""
         self.hand_numbers = [str(i+1) for i in range(self.num_hands)]
         self.hand_numbers_pairs = [(i,str(i+1)) for i in range(self.num_hands)]
-
+    
+    def clear(self):
+        """Clears the view data."""
+        self.num_hands = 0
+        self.hand_numbers.clear()
+        self.hand_numbers_pairs.clear()
+        self.start_button = "Begin"
+        self.show_hands_form = False
+        self.show_flop_form = False
+        self.show_turn_form = False
+        self.show_river_form = False
+        self.show_probabilities = False
+        self.show_community_info = False
+        self.cards.clear()
 
 def main():
 
@@ -30,6 +47,21 @@ def main():
     app = Flask(__name__)
     holdem_data = Holdem()
     view = View()
+
+    #When something goes wrong with the input, restart the app. This could be made to do a lot more.
+
+    def restart():
+        """Restart everything."""
+        holdem_data.clear()
+        view.clear()
+        return render_template(
+                'home.html', 
+                holdem_data = holdem_data,
+                view = view, 
+                SUITS = SUITS,
+                CARD_VALUES = CARD_VALUES,
+                    )
+
 
     @app.route('/', methods=['GET'])
     def home():
@@ -50,11 +82,7 @@ def main():
         view.start_button = "Restart"
 
         #clear data
-        holdem_data.hands.clear()
-        holdem_data.flop.clear()
-        holdem_data.turn = None
-        holdem_data.river = None
-
+        holdem_data.clear()
         view.show_flop_form = False
         view.show_turn_form = False
         view.show_river_form = False
@@ -77,11 +105,19 @@ def main():
         for i in range(view.num_hands):
             #look up the suits and values of each of the cards
             r = request.form
+            if '--value--' in r or '--suit--' in r:
+                return restart()
             hand = []
             for card_num in ['first','second']:
                 value_key,suit_key = f'{card_num}_value{i+1}', f'{card_num}_suit{i+1}'
                 value, suit = r[value_key], r[suit_key]
-                hand.append(Card(value,suit))
+                card = Card(value,suit)
+                if card in view.cards:
+                    return restart()  
+                else:
+                    hand.append(Card(value,suit))
+                    view.cards.add(card)
+
             holdem_data.add_hand(*hand)
         
         #turn on flop form, off hand form
@@ -106,11 +142,19 @@ def main():
     def flop():
             """Enter the flop and update the page."""
             r = request.form
+            if '--value--' in r or '--suit--' in r:
+                return restart()
             flop = []
             for card_num in ['first','second','third']:
                 value_key,suit_key = f'{card_num}_value', f'{card_num}_suit'
                 value, suit = r[value_key], r[suit_key]
-                flop.append(Card(value,suit))
+                card = Card(value,suit)
+                if card in view.cards:
+                    return restart()  
+                else:
+                    flop.append(card)
+                    view.cards.add(card)
+
             holdem_data.set_flop(*flop)
             
             #turn on turn form, community card info, turn off flop form
@@ -133,9 +177,14 @@ def main():
     def turn():
         """Enter the turn and update the page."""
         r = request.form
+        if '--value--' in r or '--suit--' in r:
+            return restart()
         value, suit = r['value'], r['suit']
         card = Card(value,suit)
-        holdem_data.set_turn(card)
+        if card in view.cards:
+            return restart()  
+        else:
+            holdem_data.set_turn(card)
         
         #turn on river form, turn form off
         view.show_turn_form = False
@@ -156,9 +205,14 @@ def main():
     def river():
         """Enter the river and update the page."""
         r = request.form
+        if '--value--' in r or '--suit--' in r:
+            return restart()
         value, suit = r['value'], r['suit']
         card = Card(value,suit)
-        holdem_data.set_river(card)
+        if card in view.cards:
+            return restart()  
+        else:
+            holdem_data.set_river(card)
         
         #turn off river form
         view.show_river_form = False
@@ -173,7 +227,7 @@ def main():
                         SUITS = SUITS,
                         CARD_VALUES = CARD_VALUES,
                             )
-    app.run()
+    app.run(debug = True)
 
 if __name__ == '__main__':
     main()
