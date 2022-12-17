@@ -91,9 +91,3 @@ class Holdem:
 
         output = list(map(lambda x: round(mult*x,rounding),self.probabilities))
         return output[:len(self.hands)], output[len(self.hands):]
-        
-#h = Holdem([Card('Nine','Hearts'),Card('Nine','Diamonds')],
- #       [Card('Two','Hearts'),Card('Three','Spades')])
-
-
-#print(h.percentages())
