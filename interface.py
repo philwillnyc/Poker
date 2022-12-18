@@ -66,13 +66,7 @@ def main():
     @app.route('/', methods=['GET'])
     def home():
         """Initial appearance of page."""
-
-        return render_template('home.html', 
-                            holdem_data = holdem_data, 
-                            view = view,
-                            SUITS = SUITS,
-                            CARD_VALUES = CARD_VALUES
-                            )
+        return restart()
 
     @app.route('/', methods=['POST'])
     def enter_number_hands():
@@ -120,9 +114,8 @@ def main():
 
             holdem_data.add_hand(*hand)
         
-        #turn on flop form, off hand form
+        #turn on flop form
 
-        view.show_hands_form = False
         view.show_flop_form = True
         view.show_probabilities = True
 
@@ -157,10 +150,9 @@ def main():
 
             holdem_data.set_flop(*flop)
             
-            #turn on turn form, community card info, turn off flop form
+            #turn on turn form, community card info, 
             view.show_turn_form = True
             view.show_community_info = True
-            view.show_flop_form = False
 
             #update the probabilities
             holdem_data.update_probabilities()
@@ -186,8 +178,7 @@ def main():
         else:
             holdem_data.set_turn(card)
         
-        #turn on river form, turn form off
-        view.show_turn_form = False
+        #turn on river form
         view.show_river_form = True
 
         #update the probabilities
@@ -214,8 +205,6 @@ def main():
         else:
             holdem_data.set_river(card)
         
-        #turn off river form
-        view.show_river_form = False
 
         #update the probabilities
         holdem_data.update_probabilities()
@@ -227,7 +216,7 @@ def main():
                         SUITS = SUITS,
                         CARD_VALUES = CARD_VALUES,
                             )
-    app.run()
+    app.run(debug = True)
 
 if __name__ == '__main__':
     main()

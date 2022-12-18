@@ -1,187 +1,247 @@
 <!DOCTYPE html>
 <html>
+<head>
+<style>
+    .grid-container {display: grid;
+        grid-template-areas:
+        'header header header'
+        'top top top'
+        'left center right'
+        'bottom bottom bottom';
+    }
+    .head {grid-area: header}
+    .select {grid-area: top}
+    .hands {grid-area: left;
+    }
+    .probabilities {grid-area: bottom}
+    .community {grid-area: right}
+    .flopTurnRiver {grid-area: center}
+</style>
+</head>
 <body>
+<div class = "grid-container">
+    <div class = "head">
+        <h1>Texas Hold-em Probability Calculator</h1>
+    </div>
 
-<h1>Texas Hold-em Probability Calculator</h1>
+    <div class = "select">
+    <!--Menu to select number of hands -->
 
-<!--Menu to select number of hands -->
+    <form action = "/" method = post>
 
-<form action = "/" method = post>
+        <label for="num_hands">Number of hands</label><br><br>
+        <select id="num_hands" name="num_hands">
+        <option value = '2'> 2 </option>
+        <option value = '3'> 3 </option>
+        <option value = '4'> 4 </option>
+        <option value = '5'> 5 </option>
+        <option value = '6'> 6 </option>
+        <option value = '7'> 7 </option>
+        <option value = '8'> 8 </option>
+        <option value = '9'> 9 </option>
+        <option value = '10'> 10 </option>
+            <br><br>
 
-    <label for="num_hands">Number of hands</label><br><br>
-    <select id="num_hands" name="num_hands">
-    <option value = '2'> 2 </option>
-    <option value = '3'> 3 </option>
-    <option value = '4'> 4 </option>
-    <option value = '5'> 5 </option>
-    <option value = '6'> 6 </option>
-    <option value = '7'> 7 </option>
-    <option value = '8'> 8 </option>
-    <option value = '9'> 9 </option>
-    <option value = '10'> 10 </option>
-        <br><br>
-
-    <input type="submit" value = "{{ view.start_button }}"</input>
-
-</form>
-
-<!--Display of probabilities-->
-
-{% if view.show_probabilities %}
-
-    <h1>Probabilities</h1>
-
-    {% for (i, si) in view.hand_numbers_pairs %}
-
-        Hand {{ si }}: <br>
-        {{ holdem_data.hands[i][0].value }} of {{ holdem_data.hands[i][0].suit }} <br>
-        {{ holdem_data.hands[i][1].value }} of {{ holdem_data.hands[i][1].suit }} <br>
-        Win {{holdem_data.percentages()[0][i]}}%, 
-        Tie {{holdem_data.percentages()[1][i]}}% <br><br>
-
-    {% endfor %}
-
-{% endif %}
-
-<!--Display of community card info-->
-
-
-
-{% if view.show_community_info %}
-
-<h2>Community Cards</h2>
-
-    {% for card in holdem_data.flop %}
-        {{ card.value }} of {{ card.suit }} <br>
-    {% endfor %}
-
-    {% if holdem_data.turn %}
-        {{ holdem_data.turn.value }} of {{ holdem_data.turn.suit }} <br>
-    {% endif %}
-
-    {% if holdem_data.river %}
-        {{ holdem_data.river.value }} of {{ holdem_data.river.suit }} <br>
-    {% endif %}
-
-
-{% endif %}
-
-<!--Menu to select cards in hands -->
-
-{% if view.show_hands_form %}
-
-    <form action = "/hands" method = post>
-
-    {% for num in view.hand_numbers %}
-
-        <h3>Hand {{ num }}</h3>
-
-        <div>
-            <h5>First Card</h5>
-            <label for="first_val{{ num }}">{{ Value }}</label>
-            <select id="first_val{{ num }}" name="first_value{{ num }}">
-            <option value = 'NULL'> --value-- </option>
-            {% for val in CARD_VALUES %}
-                <option value = "{{ val }}">{{ val }}</option>
-            {% endfor %}
-            </select>
-
-            of
-
-            <label for="first_suit{{ num }}">{{ Suit }}</label>
-            <select id="first_suit{{ num }}" name="first_suit{{ num }}">
-            <option value = 'NULL'> --suit-- </option>
-            {% for suit in SUITS %}
-                <option value = "{{ suit }}">{{ suit }}</option>
-            {% endfor %}
-            </select>
-
-            <h5>Second Card</h5>
-            <label for="second_val{{ num }}">{{ Value }}</label>
-            <select id="second_val{{ num }}" name="second_value{{ num }}">
-            <option value = 'NULL'> --value-- </option>
-            {% for val in CARD_VALUES %}
-                <option value = "{{ val }}">{{ val }}</option>
-            {% endfor %}
-            </select>
-
-            of
-
-            <label for="second_suit{{ num }}">{{ Suit }}</label>
-            <select id="second_suit{{ num }}" name="second_suit{{ num }}">
-            <option value = 'NULL'> --suit-- </option>
-            {% for suit in SUITS %}
-                <option value = "{{ suit }}">{{ suit }}</option>
-            {% endfor %}
-            </select>
-
-        </div>
-    
-        <br>
-
-    
-        
-    {% endfor %}
-    
-    <input type="submit" value = "Submit"</input><br><br>
-
+        <input type="submit" value = "{{ view.start_button }}"</input>
 
     </form>
+    </div>  
 
-{% endif %}
+    <div class = "probabilities">
+    <!--Display of probabilities-->
+
+    {% if view.show_probabilities %}
+
+        <h1>Probabilities</h1>
+
+        {% for (i, si) in view.hand_numbers_pairs %}
+
+            Hand {{ si }}: <br>
+            {{ holdem_data.hands[i][0].value }} of {{ holdem_data.hands[i][0].suit }} <br>
+            {{ holdem_data.hands[i][1].value }} of {{ holdem_data.hands[i][1].suit }} <br>
+            Win {{holdem_data.percentages()[0][i]}}%, 
+            Tie {{holdem_data.percentages()[1][i]}}% <br><br>
+
+        {% endfor %}
+
+    {% endif %}
+    </div>
+
+    <div class = "community">
+    <!--Display of community card info-->
 
 
 
-<!--Menu to select flop -->
+    {% if view.show_community_info %}
 
-{% if view.show_flop_form %}
+    <h2>Community Cards</h2>
 
-    <form action = "/flop" method = post>
+        {% for card in holdem_data.flop %}
+            {{ card.value }} of {{ card.suit }} <br>
+        {% endfor %}
 
-        <h3>Flop</h3>
+        {% if holdem_data.turn %}
+            {{ holdem_data.turn.value }} of {{ holdem_data.turn.suit }} <br>
+        {% endif %}
 
-        <div>
-            <h5>First Card</h5>
-            <label for="first_val">{{ Value }}</label>
-            <select id="first_val" name="first_value">
-            <option value = 'NULL'> --value-- </option>
-            {% for val in CARD_VALUES %}
-                <option value = "{{ val }}">{{ val }}</option>
-            {% endfor %}
-            </select>
+        {% if holdem_data.river %}
+            {{ holdem_data.river.value }} of {{ holdem_data.river.suit }} <br>
+        {% endif %}
 
-            of
 
-            <label for="first_suit">{{ Suit }}</label>
-            <select id="first_suit" name="first_suit">
-            <option value = 'NULL'> --suit-- </option>
-            {% for suit in SUITS %}
-                <option value = "{{ suit }}">{{ suit }}</option>
-            {% endfor %}
-            </select>
+    {% endif %}
 
-            <h5>Second Card</h5>
-            <label for="second_val">{{ Value }}</label>
-            <select id="second_val" name="second_value">
-            <option value = 'NULL'> --value-- </option>
-            {% for val in CARD_VALUES %}
-                <option value = "{{ val }}">{{ val }}</option>
-            {% endfor %}
-            </select>
+    </div>
 
-            of
+    <!--Menu to select cards in hands -->
 
-            <label for="second_suit">{{ Suit }}</label>
-            <select id="second_suit" name="second_suit">
-            <option value = 'NULL'> --suit-- </option>
-            {% for suit in SUITS %}
-                <option value = "{{ suit }}">{{ suit }}</option>
-            {% endfor %}
-            </select>
+    <div class = "hands">
+
+    {% if view.show_hands_form %}
+
+        <form action = "/hands" method = post>
+
+        {% for num in view.hand_numbers %}
+
+            <h3>Hand {{ num }}</h3>
+
+                
+                <label for="first_val{{ num }}">{{ Value }}</label>
+                <select id="first_val{{ num }}" name="first_value{{ num }}">
+                <option value = 'NULL'> --value-- </option>
+                {% for val in CARD_VALUES %}
+                    <option value = "{{ val }}">{{ val }}</option>
+                {% endfor %}
+                </select>
+
+                of
+
+                <label for="first_suit{{ num }}">{{ Suit }}</label>
+                <select id="first_suit{{ num }}" name="first_suit{{ num }}">
+                <option value = 'NULL'> --suit-- </option>
+                {% for suit in SUITS %}
+                    <option value = "{{ suit }}">{{ suit }}</option>
+                {% endfor %}
+                </select>
+
+                <br>
+                
+                <label for="second_val{{ num }}">{{ Value }}</label>
+                <select id="second_val{{ num }}" name="second_value{{ num }}">
+                <option value = 'NULL'> --value-- </option>
+                {% for val in CARD_VALUES %}
+                    <option value = "{{ val }}">{{ val }}</option>
+                {% endfor %}
+                </select>
+
+                of
+
+                <label for="second_suit{{ num }}">{{ Suit }}</label>
+                <select id="second_suit{{ num }}" name="second_suit{{ num }}">
+                <option value = 'NULL'> --suit-- </option>
+                {% for suit in SUITS %}
+                    <option value = "{{ suit }}">{{ suit }}</option>
+                {% endfor %}
+                </select>
+
+            <br>  
             
-            <h5>Third Card</h5>
-            <label for="third_val">{{ Value }}</label>
-            <select id="third_val" name="third_value">
+        {% endfor %}
+        
+        <input type="submit" value = "Submit"</input><br><br>
+
+
+        </form>
+
+    {% endif %}
+    
+    </div>
+
+    <div class = "flopTurnRiver">
+    <!--Menu to select flop -->
+
+    {% if view.show_flop_form %}
+
+        <form action = "/flop" method = post>
+
+            <h3>Flop</h3>
+
+                
+                <label for="first_val">{{ Value }}</label>
+                <select id="first_val" name="first_value">
+                <option value = 'NULL'> --value-- </option>
+                {% for val in CARD_VALUES %}
+                    <option value = "{{ val }}">{{ val }}</option>
+                {% endfor %}
+                </select>
+
+                of
+
+                <label for="first_suit">{{ Suit }}</label>
+                <select id="first_suit" name="first_suit">
+                <option value = 'NULL'> --suit-- </option>
+                {% for suit in SUITS %}
+                    <option value = "{{ suit }}">{{ suit }}</option>
+                {% endfor %}
+                </select>
+                
+                <br>
+                
+                <label for="second_val">{{ Value }}</label>
+                <select id="second_val" name="second_value">
+                <option value = 'NULL'> --value-- </option>
+                {% for val in CARD_VALUES %}
+                    <option value = "{{ val }}">{{ val }}</option>
+                {% endfor %}
+                </select>
+
+                of
+
+                <label for="second_suit">{{ Suit }}</label>
+                <select id="second_suit" name="second_suit">
+                <option value = 'NULL'> --suit-- </option>
+                {% for suit in SUITS %}
+                    <option value = "{{ suit }}">{{ suit }}</option>
+                {% endfor %}
+                </select>
+                
+                <br>
+                
+                <label for="third_val">{{ Value }}</label>
+                <select id="third_val" name="third_value">
+                <option value = 'NULL'> --value-- </option>
+                {% for val in CARD_VALUES %}
+                    <option value = "{{ val }}">{{ val }}</option>
+                {% endfor %}
+                </select>
+
+                of
+
+                <label for="third_suit">{{ Suit }}</label>
+                <select id="third_suit" name="third_suit">
+                <option value = 'NULL'> --suit- </option>
+                {% for suit in SUITS %}
+                    <option value = "{{ suit }}">{{ suit }}</option>
+                {% endfor %}
+                </select>
+
+
+        <br><br>
+
+        <input type="submit" value = "Submit"</input>
+        </form>
+
+    {% endif %}
+
+    <!--Menu to select turn -->
+    {% if view.show_turn_form %}
+
+        <form action = "/turn" method = post>
+
+            <h3>Turn</h3>
+
+            <label for="value">{{ Value }}</label>
+            <select id="value" name="value">
             <option value = 'NULL'> --value-- </option>
             {% for val in CARD_VALUES %}
                 <option value = "{{ val }}">{{ val }}</option>
@@ -190,88 +250,53 @@
 
             of
 
-            <label for="third_suit">{{ Suit }}</label>
-            <select id="third_suit" name="third_suit">
-            <option value = 'NULL'> --suit- </option>
+            <label for="suit">{{ Suit }}</label>
+            <select id="suit" name="suit">
+            <option value = 'NULL'> --suit-- </option>
             {% for suit in SUITS %}
                 <option value = "{{ suit }}">{{ suit }}</option>
             {% endfor %}
             </select>
 
-        </div>
+            <input type="submit" value = "Submit"</input>
+        </form>
 
-    <br><br>
+    {% endif %}
 
-    <input type="submit" value = "Submit"</input>
-    </form>
+    <!--Menu to select river -->
 
-{% endif %}
+    {% if view.show_river_form %}
 
-<!--Menu to select turn -->
-{% if view.show_turn_form %}
+        <form action = "/river" method = post>
 
-    <form action = "/turn" method = post>
+            <h3>River</h3>
 
-        <h3>Turn</h3>
+            <label for="value">{{ Value }}</label>
+            <select id="value" name="value">
+            <option value = 'NULL'> --value-- </option>
+            {% for val in CARD_VALUES %}
+                <option value = "{{ val }}">{{ val }}</option>
+            {% endfor %}
+            </select>
 
-        <label for="value">{{ Value }}</label>
-        <select id="value" name="value">
-        <option value = 'NULL'> --value-- </option>
-        {% for val in CARD_VALUES %}
-            <option value = "{{ val }}">{{ val }}</option>
-        {% endfor %}
-        </select>
+            of
 
-        of
+            <label for="suit">{{ Suit }}</label>
+            <select id="suit" name="suit">
+            <option value = 'NULL'> --suit-- </option>
+            {% for suit in SUITS %}
+                <option value = "{{ suit }}">{{ suit }}</option>
+            {% endfor %}
+            </select> 
 
-        <label for="suit">{{ Suit }}</label>
-        <select id="suit" name="suit">
-        <option value = 'NULL'> --suit-- </option>
-        {% for suit in SUITS %}
-            <option value = "{{ suit }}">{{ suit }}</option>
-        {% endfor %}
-        </select>
+            <input type="submit" value = "Submit"</input>
 
-        <input type="submit" value = "Submit"</input>
-    </form>
+        </form>
 
-{% endif %}
+    {% endif %}
+    </div>
 
-<!--Menu to select river -->
-
-{% if view.show_river_form %}
-
-    <form action = "/river" method = post>
-
-        <h3>River</h3>
-
-        <label for="value">{{ Value }}</label>
-        <select id="value" name="value">
-        <option value = 'NULL'> --value-- </option>
-        {% for val in CARD_VALUES %}
-            <option value = "{{ val }}">{{ val }}</option>
-        {% endfor %}
-        </select>
-
-        of
-
-        <label for="suit">{{ Suit }}</label>
-        <select id="suit" name="suit">
-        <option value = 'NULL'> --suit-- </option>
-        {% for suit in SUITS %}
-            <option value = "{{ suit }}">{{ suit }}</option>
-        {% endfor %}
-        </select> 
-
-        <br><br>
-
-        <input type="submit" value = "Submit"</input>
-
-    </form>
-
-{% endif %}
-
-
+</div>
 
 
 
