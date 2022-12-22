@@ -2,20 +2,24 @@
 <html>
 <head>
 <style>
+    html {background-color: beige;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;}
     .grid-container {display: grid;
         grid-template-areas:
-        'header header header'
-        'top top top'
-        'left center right'
-        'bottom bottom bottom';
+        'header header '
+        'top top'
+        'left right'
+        'bottom bottom';
+        width: 600px;
+        border: 10px;
+        border-color:brown;
     }
     .head {grid-area: header}
     .select {grid-area: top}
     .hands {grid-area: left;
     }
-    .probabilities {grid-area: bottom}
-    .community {grid-area: right}
-    .flopTurnRiver {grid-area: center}
+    .community {grid-area: bottom}
+    .flopTurnRiver {grid-area: right}
 </style>
 </head>
 <body>
@@ -47,34 +51,12 @@
     </form>
     </div>  
 
-    <div class = "probabilities">
-    <!--Display of probabilities-->
-
-    {% if view.show_probabilities %}
-
-        <h1>Probabilities</h1>
-
-        {% for (i, si) in view.hand_numbers_pairs %}
-
-            Hand {{ si }}: <br>
-            {{ holdem_data.hands[i][0].value }} of {{ holdem_data.hands[i][0].suit }} <br>
-            {{ holdem_data.hands[i][1].value }} of {{ holdem_data.hands[i][1].suit }} <br>
-            Win {{holdem_data.percentages()[0][i]}}%, 
-            Tie {{holdem_data.percentages()[1][i]}}% <br><br>
-
-        {% endfor %}
-
-    {% endif %}
-    </div>
-
     <div class = "community">
     <!--Display of community card info-->
 
-
-
     {% if view.show_community_info %}
 
-    <h2>Community Cards</h2>
+    <h3>Community Cards</h3>
 
         {% for card in holdem_data.flop %}
             {{ card.value }} of {{ card.suit }} <br>
@@ -93,7 +75,7 @@
 
     </div>
 
-    <!--Menu to select cards in hands -->
+    <!--Menu to select cards in hands and display of probabilities -->
 
     <div class = "hands">
 
@@ -144,16 +126,30 @@
                 {% endfor %}
                 </select>
 
-            <br>  
+            <br>
             
         {% endfor %}
+        <br>
         
         <input type="submit" value = "Submit"</input><br><br>
 
 
         </form>
+    {% elif view.show_probabilities %}
+
+        {% for (i, si) in view.hand_numbers_pairs %}
+
+            <h3>Hand {{ si }}</h3>
+            {{ holdem_data.hands[i][0].value }} of {{ holdem_data.hands[i][0].suit }} <br>
+            {{ holdem_data.hands[i][1].value }} of {{ holdem_data.hands[i][1].suit }} <br>
+            Win {{holdem_data.percentages()[0][i]}}%, 
+            Tie {{holdem_data.percentages()[1][i]}}% <br>
+            
+        {% endfor %}
 
     {% endif %}
+
+    
     
     </div>
 
@@ -258,6 +254,8 @@
             {% endfor %}
             </select>
 
+            <br><br>
+
             <input type="submit" value = "Submit"</input>
         </form>
 
@@ -289,9 +287,12 @@
             {% endfor %}
             </select> 
 
+            <br><br>
+
             <input type="submit" value = "Submit"</input>
 
         </form>
+        <br>
 
     {% endif %}
     </div>

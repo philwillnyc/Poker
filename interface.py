@@ -62,7 +62,6 @@ def main():
                 CARD_VALUES = CARD_VALUES,
                     )
 
-
     @app.route('/', methods=['GET'])
     def home():
         """Initial appearance of page."""
@@ -99,7 +98,7 @@ def main():
         for i in range(view.num_hands):
             #look up the suits and values of each of the cards
             r = request.form
-            if '--value--' in r or '--suit--' in r:
+            if 'NULL' in r.values():
                 return restart()
             hand = []
             for card_num in ['first','second']:
@@ -114,10 +113,12 @@ def main():
 
             holdem_data.add_hand(*hand)
         
-        #turn on flop form
+        #turn on flop form, turn off hands form, turn on community display and probabilities
 
+        view.show_hands_form = False
         view.show_flop_form = True
         view.show_probabilities = True
+        view.show_community_info = True
 
         #update the probabilities
 
@@ -135,7 +136,7 @@ def main():
     def flop():
             """Enter the flop and update the page."""
             r = request.form
-            if '--value--' in r or '--suit--' in r:
+            if 'NULL' in r.values():
                 return restart()
             flop = []
             for card_num in ['first','second','third']:
@@ -150,9 +151,9 @@ def main():
 
             holdem_data.set_flop(*flop)
             
-            #turn on turn form, community card info, 
+            #turn on turn form, turn off flop form
             view.show_turn_form = True
-            view.show_community_info = True
+            view.show_flop_form = False
 
             #update the probabilities
             holdem_data.update_probabilities()
@@ -169,7 +170,7 @@ def main():
     def turn():
         """Enter the turn and update the page."""
         r = request.form
-        if '--value--' in r or '--suit--' in r:
+        if 'NULL' in r.values():
             return restart()
         value, suit = r['value'], r['suit']
         card = Card(value,suit)
@@ -178,8 +179,9 @@ def main():
         else:
             holdem_data.set_turn(card)
         
-        #turn on river form
+        #turn on river form, turn off turn form
         view.show_river_form = True
+        view.show_turn_form = False
 
         #update the probabilities
         holdem_data.update_probabilities()
@@ -196,7 +198,7 @@ def main():
     def river():
         """Enter the river and update the page."""
         r = request.form
-        if '--value--' in r or '--suit--' in r:
+        if 'NULL' in r.values():
             return restart()
         value, suit = r['value'], r['suit']
         card = Card(value,suit)
@@ -208,6 +210,9 @@ def main():
 
         #update the probabilities
         holdem_data.update_probabilities()
+
+        #turn off river form
+        view.show_river_form = False
 
         return render_template(
                         'home.html', 
