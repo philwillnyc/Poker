@@ -41,164 +41,133 @@ class View():
         self.show_community_info = False
         self.cards.clear()
 
-def main():
+#Create the flask app and a holdem object to store hand data, and a view
+#object to keep track of the various viewing components.
 
-    #create the flask app and a holdem object to store hand data, and a view
-    #object to keep track of the various viewing components.
-    app = Flask(__name__)
-    #setting up individual sessions so multiple users don't conflict. 
-    app.secret_key = '123456789'
+app = Flask(__name__)
 
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_PERMANENT'] = False
-    server_session = (Session(app))
+#Set up individual sessions so multiple users don't conflict. 
+
+app.secret_key = '123456789'
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+server_session = (Session(app))
+
+#When something goes wrong with the input, restart. This could be made to do a lot more.
+
+def restart():
+    """Restart everything."""
+
+    session['holdem_data'] = Holdem()
+    session['view'] = View()
+
+    return render_template(
+            'home.html', 
+            holdem_data = session['holdem_data'],
+            view =  session['view'], 
+            SUITS = SUITS,
+            CARD_VALUES = CARD_VALUES,
+                )
+
+@app.route('/', methods=['GET'])
+def home():
+    """Initial appearance of page."""
+    return restart()
+
+@app.route('/', methods=['POST'])
+def enter_number_hands():
+    """Enter the number of hands and update page."""
+    holdem_data = session['holdem_data']
+    view =  session['view']
+
+    view.num_hands = int(request.form['num_hands'])
+    view.update_hand_numbers()
+    view.start_button = "Restart"
+
+    #clear data
+    holdem_data.clear()
+    view.show_flop_form = False
+    view.show_turn_form = False
+    view.show_river_form = False
+    view.show_probabilities = False
+    view.show_community_info = False
     
+    #turn on hands form
+    view.show_hands_form = True
+    return render_template(
+                        'home.html', 
+                        holdem_data = holdem_data,
+                        view = view,
+                        SUITS = SUITS,
+                        CARD_VALUES = CARD_VALUES
+                            )
 
-    #When something goes wrong with the input, restart. This could be made to do a lot more.
+@app.route('/hands', methods=['POST'])
+def enter_hands():
+    """Enter hands and update page."""
+    holdem_data = session['holdem_data']
+    view =  session['view']
+    for i in range(view.num_hands):
+        #look up the suits and values of each of the cards
+        r = request.form
+        if 'NULL' in r.values():
+            return restart()
+        hand = []
+        for card_num in ['first','second']:
+            value_key,suit_key = f'{card_num}_value{i+1}', f'{card_num}_suit{i+1}'
+            value, suit = r[value_key], r[suit_key]
+            card = Card(value,suit)
+            if card in view.cards:
+                return restart()  
+            else:
+                hand.append(Card(value,suit))
+                view.cards.add(card)
 
-    def restart():
-        """Restart everything."""
+        holdem_data.add_hand(*hand)
+    
+    #turn on flop form, turn off hands form, turn on community display and probabilities
 
-        session['holdem_data'] = Holdem()
-        session['view'] = View()
+    view.show_hands_form = False
+    view.show_flop_form = True
+    view.show_probabilities = True
+    view.show_community_info = True
 
-        return render_template(
-                'home.html', 
-                holdem_data = session['holdem_data'],
-                view =  session['view'], 
-                SUITS = SUITS,
-                CARD_VALUES = CARD_VALUES,
-                    )
+    #update the probabilities
 
-    @app.route('/', methods=['GET'])
-    def home():
-        """Initial appearance of page."""
-        return restart()
+    holdem_data.update_probabilities()
 
-    @app.route('/', methods=['POST'])
-    def enter_number_hands():
-        """Enter the number of hands and update page."""
+    return render_template(
+                        'home.html', 
+                        holdem_data = holdem_data,
+                        view = view, 
+                        SUITS = SUITS,
+                        CARD_VALUES = CARD_VALUES,
+                            )
+
+@app.route('/flop', methods = ['POST'])
+def flop():
+        """Enter the flop and update the page."""
         holdem_data = session['holdem_data']
         view =  session['view']
+        r = request.form
+        if 'NULL' in r.values():
+            return restart()
+        flop = []
+        for card_num in ['first','second','third']:
+            value_key,suit_key = f'{card_num}_value', f'{card_num}_suit'
+            value, suit = r[value_key], r[suit_key]
+            card = Card(value,suit)
+            if card in view.cards:
+                return restart()  
+            else:
+                flop.append(card)
+                view.cards.add(card)
 
-        view.num_hands = int(request.form['num_hands'])
-        view.update_hand_numbers()
-        view.start_button = "Restart"
-
-        #clear data
-        holdem_data.clear()
+        holdem_data.set_flop(*flop)
+        
+        #turn on turn form, turn off flop form
+        view.show_turn_form = True
         view.show_flop_form = False
-        view.show_turn_form = False
-        view.show_river_form = False
-        view.show_probabilities = False
-        view.show_community_info = False
-        
-        #turn on hands form
-        view.show_hands_form = True
-        return render_template(
-                            'home.html', 
-                            holdem_data = holdem_data,
-                            view = view,
-                            SUITS = SUITS,
-                            CARD_VALUES = CARD_VALUES
-                                )
-
-    @app.route('/hands', methods=['POST'])
-    def enter_hands():
-        """Enter hands and update page."""
-        holdem_data = session['holdem_data']
-        view =  session['view']
-        for i in range(view.num_hands):
-            #look up the suits and values of each of the cards
-            r = request.form
-            if 'NULL' in r.values():
-                return restart()
-            hand = []
-            for card_num in ['first','second']:
-                value_key,suit_key = f'{card_num}_value{i+1}', f'{card_num}_suit{i+1}'
-                value, suit = r[value_key], r[suit_key]
-                card = Card(value,suit)
-                if card in view.cards:
-                    return restart()  
-                else:
-                    hand.append(Card(value,suit))
-                    view.cards.add(card)
-
-            holdem_data.add_hand(*hand)
-        
-        #turn on flop form, turn off hands form, turn on community display and probabilities
-
-        view.show_hands_form = False
-        view.show_flop_form = True
-        view.show_probabilities = True
-        view.show_community_info = True
-
-        #update the probabilities
-
-        holdem_data.update_probabilities()
-
-        return render_template(
-                            'home.html', 
-                            holdem_data = holdem_data,
-                            view = view, 
-                            SUITS = SUITS,
-                            CARD_VALUES = CARD_VALUES,
-                                )
-
-    @app.route('/flop', methods = ['POST'])
-    def flop():
-            """Enter the flop and update the page."""
-            holdem_data = session['holdem_data']
-            view =  session['view']
-            r = request.form
-            if 'NULL' in r.values():
-                return restart()
-            flop = []
-            for card_num in ['first','second','third']:
-                value_key,suit_key = f'{card_num}_value', f'{card_num}_suit'
-                value, suit = r[value_key], r[suit_key]
-                card = Card(value,suit)
-                if card in view.cards:
-                    return restart()  
-                else:
-                    flop.append(card)
-                    view.cards.add(card)
-
-            holdem_data.set_flop(*flop)
-            
-            #turn on turn form, turn off flop form
-            view.show_turn_form = True
-            view.show_flop_form = False
-
-            #update the probabilities
-            holdem_data.update_probabilities()
-
-            return render_template(
-                            'home.html', 
-                            holdem_data = holdem_data,
-                            view = view, 
-                            SUITS = SUITS,
-                            CARD_VALUES = CARD_VALUES,
-
-                                )
-    @app.route('/turn', methods = ['POST'])
-    def turn():
-        """Enter the turn and update the page."""
-        holdem_data = session['holdem_data']
-        view =  session['view']
-        r = request.form
-        if 'NULL' in r.values():
-            return restart()
-        value, suit = r['value'], r['suit']
-        card = Card(value,suit)
-        if card in view.cards:
-            return restart()  
-        else:
-            holdem_data.set_turn(card)
-        
-        #turn on river form, turn off turn form
-        view.show_river_form = True
-        view.show_turn_form = False
 
         #update the probabilities
         holdem_data.update_probabilities()
@@ -209,39 +178,67 @@ def main():
                         view = view, 
                         SUITS = SUITS,
                         CARD_VALUES = CARD_VALUES,
+
                             )
+@app.route('/turn', methods = ['POST'])
+def turn():
+    """Enter the turn and update the page."""
+    holdem_data = session['holdem_data']
+    view =  session['view']
+    r = request.form
+    if 'NULL' in r.values():
+        return restart()
+    value, suit = r['value'], r['suit']
+    card = Card(value,suit)
+    if card in view.cards:
+        return restart()  
+    else:
+        holdem_data.set_turn(card)
     
-    @app.route('/river', methods = ['POST'])
-    def river():
-        holdem_data = session['holdem_data']
-        view =  session['view']
-        """Enter the river and update the page."""
-        r = request.form
-        if 'NULL' in r.values():
-            return restart()
-        value, suit = r['value'], r['suit']
-        card = Card(value,suit)
-        if card in view.cards:
-            return restart()  
-        else:
-            holdem_data.set_river(card)
-        
+    #turn on river form, turn off turn form
+    view.show_river_form = True
+    view.show_turn_form = False
 
-        #update the probabilities
-        holdem_data.update_probabilities()
+    #update the probabilities
+    holdem_data.update_probabilities()
 
-        #turn off river form
-        view.show_river_form = False
+    return render_template(
+                    'home.html', 
+                    holdem_data = holdem_data,
+                    view = view, 
+                    SUITS = SUITS,
+                    CARD_VALUES = CARD_VALUES,
+                        )
 
-        return render_template(
-                        'home.html', 
-                        holdem_data = holdem_data,
-                        view = view, 
-                        SUITS = SUITS,
-                        CARD_VALUES = CARD_VALUES,
-                            )
-    app.run(debug = True)
+@app.route('/river', methods = ['POST'])
+def river():
+    holdem_data = session['holdem_data']
+    view =  session['view']
+    """Enter the river and update the page."""
+    r = request.form
+    if 'NULL' in r.values():
+        return restart()
+    value, suit = r['value'], r['suit']
+    card = Card(value,suit)
+    if card in view.cards:
+        return restart()  
+    else:
+        holdem_data.set_river(card)
+    
 
-if __name__ == '__main__':
-    main()
+    #update the probabilities
+    holdem_data.update_probabilities()
+
+    #turn off river form
+    view.show_river_form = False
+
+    return render_template(
+                    'home.html', 
+                    holdem_data = holdem_data,
+                    view = view, 
+                    SUITS = SUITS,
+                    CARD_VALUES = CARD_VALUES,
+                        )
+app.run(debug = True)
+
 
