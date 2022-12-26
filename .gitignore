@@ -3,6 +3,7 @@
 .vscode
 __pycache__
 build
+flask_session
 cython_debug.ipynb
 algorithms.c
 *.pyd

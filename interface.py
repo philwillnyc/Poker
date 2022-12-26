@@ -1,5 +1,6 @@
 """Flask for the web interface."""
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
+from flask_session import Session
 from constants import SUITS, CARD_VALUES
 from holdem import Card, Holdem
 
@@ -45,19 +46,26 @@ def main():
     #create the flask app and a holdem object to store hand data, and a view
     #object to keep track of the various viewing components.
     app = Flask(__name__)
-    holdem_data = Holdem()
-    view = View()
+    #setting up individual sessions so multiple users don't conflict. 
+    app.secret_key = '123456789'
 
-    #When something goes wrong with the input, restart the app. This could be made to do a lot more.
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_PERMANENT'] = False
+    server_session = (Session(app))
+    
+
+    #When something goes wrong with the input, restart. This could be made to do a lot more.
 
     def restart():
         """Restart everything."""
-        holdem_data.clear()
-        view.clear()
+
+        session['holdem_data'] = Holdem()
+        session['view'] = View()
+
         return render_template(
                 'home.html', 
-                holdem_data = holdem_data,
-                view = view, 
+                holdem_data = session['holdem_data'],
+                view =  session['view'], 
                 SUITS = SUITS,
                 CARD_VALUES = CARD_VALUES,
                     )
@@ -70,6 +78,9 @@ def main():
     @app.route('/', methods=['POST'])
     def enter_number_hands():
         """Enter the number of hands and update page."""
+        holdem_data = session['holdem_data']
+        view =  session['view']
+
         view.num_hands = int(request.form['num_hands'])
         view.update_hand_numbers()
         view.start_button = "Restart"
@@ -95,6 +106,8 @@ def main():
     @app.route('/hands', methods=['POST'])
     def enter_hands():
         """Enter hands and update page."""
+        holdem_data = session['holdem_data']
+        view =  session['view']
         for i in range(view.num_hands):
             #look up the suits and values of each of the cards
             r = request.form
@@ -135,6 +148,8 @@ def main():
     @app.route('/flop', methods = ['POST'])
     def flop():
             """Enter the flop and update the page."""
+            holdem_data = session['holdem_data']
+            view =  session['view']
             r = request.form
             if 'NULL' in r.values():
                 return restart()
@@ -169,6 +184,8 @@ def main():
     @app.route('/turn', methods = ['POST'])
     def turn():
         """Enter the turn and update the page."""
+        holdem_data = session['holdem_data']
+        view =  session['view']
         r = request.form
         if 'NULL' in r.values():
             return restart()
@@ -196,6 +213,8 @@ def main():
     
     @app.route('/river', methods = ['POST'])
     def river():
+        holdem_data = session['holdem_data']
+        view =  session['view']
         """Enter the river and update the page."""
         r = request.form
         if 'NULL' in r.values():
