@@ -4,6 +4,6 @@ The goal of this project was to create a Texas Hold-em probabilities calculator 
 
 Instead, I decided to explore cython to speed up the brute force probability calculation. This reduced the computation time to less than half a second for 2 hand calculations, and a bit longer for larger numbers of hands, but always under 1 second. Further speed-ups could be accomplished by enabling multi-processing, but to do so would require restructuring the iteration in the main cython algorithm so that it can be done in parallel. This is quite do-able. Another potential speed up involves restructuring the cython algorithm to do hand rankings in parallel, so that, when one hand is the clear winner, the algorithm can move on to the next possibility.
 
-The calculator is available [here](https://phillipwilliams.onrender.com/poker)
+The calculator is available [here](https://phillipwilliams.onrender.com/poker).
 
 
